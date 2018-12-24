@@ -1,0 +1,25 @@
+create table conversations (
+    key uuid, 
+    participants_id set<int>, 
+    last_message text, 
+    last_message_timestamp timestamp, 
+    conversation_title text,
+    unseen_messages map<int,boolean>,
+    primary key((key),last_message_timestamp)
+)with clustering order by (last_message_timestamp desc);
+
+create index participants_index on conversations (participants_id);
+create index unseen_messages_index on conversations ( keys (unseen_messages) );
+CREATE INDEX unseen_messages_entries_index ON conversations (ENTRIES(unseen_messages));
+
+
+create table messages (
+    key timeuuid, 
+    conversation_key UUID, 
+    body text, 
+    author_id int, 
+    is_seen boolean, 
+    timestamp timestamp,
+    primary key(key)
+);
+create index messages_index on messages (conversation_key);
