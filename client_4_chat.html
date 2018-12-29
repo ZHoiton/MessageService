@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>Client id 4 chat</title>
+    </head>
+    <body>
+        <input type="text" id="text-field" /> <button id="send-button">send</button>
+        <div id="conversations"></div>
+        <div id="chat-container"></div>
+    </body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    <script>
+        $(document).ready(function() {
+            var currently_selected_chat = null;
+            var user = {
+                id: 4,
+                email: "k_volodiev@abv.bg",
+                createdAt: "2018-12-24T10:40:06.000Z",
+                updatedAt: "2018-12-24T10:40:06.000Z"
+            };
+            var conversations = null;
+            var socket = io.connect(
+                "http://127.0.0.1:3001/private/messages",
+                { query: `user_id=${user.id}` }
+            );
+            socket.on(`message-list-${user.id}`, response => {
+                $("#conversations")[0].innerHTML = "";
+                console.log(response);
+                conversations = response.data.conversations;
+                response.data.conversations.forEach(conversation => {
+                    $("#conversations").append(
+                        $("<a></a>")
+                            .text(conversation.conversation_title)
+                            .css("display", "block")
+                            .attr("id", conversation.key)
+                            .click(function(event) {
+                                var current_conversation = conversation;
+                                console.log(current_conversation);
+
+                                // currently_selected_chat = this.id;
+                                var chat = io.connect(
+                                    "http://127.0.0.1:3001/join/chat",
+                                    { query: `conversation_key=${current_conversation.conversation_key}&user_id=${user.id}` }
+                                );
+
+                                chat.on(`load-conversation-${current_conversation.conversation_key}`, response => {
+                                    $("#chat-container")[0].innerHTML = "";
+                                    console.log(response);
+
+                                    if (response.data.messages.length !== 0) {
+                                        response.data.messages.forEach(message => {
+                                            $("#chat-container").append(
+                                                $("<p></p>")
+                                                    .text(message.body)
+                                                    .attr("id", message.key)
+                                                    .attr("data-author", message.sender)
+                                            );
+                                        });
+                                    } else {
+                                        $("#chat-container").append($("<p></p>").text("no-messages"));
+                                    }
+                                });
+
+                                chat.on("new-message", response => {
+                                    console.log("new-message", response);
+                                    if (parseInt(response.data.sender) === user.id) {
+                                        $(`#${response.data.message.temp_id}`)[0].innerHTML += " sent";
+                                        $(`#${response.data.message.temp_id}`).attr("id", response.data.message.key);
+                                    } else {
+                                        $("#chat-container").append(
+                                            $("<p></p>")
+                                                .text(response.data.message.body)
+                                                .attr("id", response.data.message.key)
+                                                .attr("data-author", response.data.sender)
+                                        );
+                                    }
+                                });
+
+                                chat.on("last-message-seen", response => {
+                                    console.log("last-message-seen", response);
+                                });
+
+                                $("#send-button").click(function(event) {
+                                    event.preventDefault();
+                                    var date = new Date();
+                                    var temp_id = date.getTime().toString() + Math.round(Math.random() * 1000).toString();
+                                    console.log("in-emit: new-message-" + current_conversation.conversation_key);
+                                    chat.emit("new-message-" + current_conversation.conversation_key, {
+                                        temp_id: temp_id,
+                                        body: $("#text-field").val(),
+                                        send_at: date
+                                    });
+                                    $("#chat-container").append(
+                                        $("<p></p>")
+                                            .text($("#text-field").val())
+                                            .attr("id", temp_id)
+                                            .attr("data-author", user.id)
+                                    );
+                                });
+
+                                $("#text-field").on("focus", event => {
+                                    console.log(`emit seen-last-message-${current_conversation.conversation_key}`);
+                                    chat.emit(`seen-last-message-${current_conversation.conversation_key}`);
+                                });
+                            })
+                    );
+                });
+            });
+        });
+    </script>
+</html>

@@ -1,0 +1,62 @@
+drop table conversations;
+drop table user_conversations;
+drop table unseen_messages_counter;
+drop table user_last_seen_message;
+drop table messages;
+
+create table conversations (
+    key timeuuid, 
+    participants_id map<int,timeuuid>, 
+    primary key(key)
+);
+
+create table unseen_messages_counter (
+    user_conversation_key timeuuid,
+    unseen_messages counter,
+    primary key (user_conversation_key)
+);
+
+create table user_last_seen_message(
+    user_conversation_key timeuuid,
+    conversation_key timeuuid,
+    user_id int,
+    last_seen_message_key timeuuid,
+    primary key(user_conversation_key)
+);
+create index user_unseen_message_conversation_index on user_last_seen_message (conversation_key);
+create index user_unseen_message_user_id_index on user_last_seen_message (user_id);
+
+create table user_conversations(
+    key timeuuid,
+    user_id int,
+    conversation_key timeuuid,
+    last_message text, 
+    last_message_timestamp timestamp, 
+    conversation_title text,
+    image text, 
+    primary key((key),conversation_key)
+);
+
+create index user_conversation_user_id_index on user_conversations (user_id);
+create index user_conversation_key_index on user_conversations (conversation_key);
+CREATE INDEX user_conversation_last_message_timestamp_index ON user_conversations (last_message_timestamp);
+
+
+create table messages (
+    key timeuuid, 
+    conversation_key timeuuid, 
+    body text, 
+    author_id int, 
+    send_at timestamp,
+    primary key((conversation_key),send_at)
+);
+
+create index messages_index on messages (key);
+
+
+
+truncate conversations;
+truncate user_conversations;
+truncate unseen_messages_counter;
+truncate user_last_seen_message;
+truncate messages;

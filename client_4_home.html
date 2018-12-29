@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>Client id 4 home</title>
+    </head>
+    <body>
+        <a href=".\client_4_chat.html">chat</a>
+        <div>
+            <p>unred:</p>
+            <p id="unred"></p>
+        </div>
+    </body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    <script>
+        $(document).ready(function() {
+            var user = {
+                id: 4,
+                email: "k_volodiev@abv.bg",
+                createdAt: "2018-12-24T10:40:06.000Z",
+                updatedAt: "2018-12-24T10:40:06.000Z"
+            };
+            var socket = io.connect(
+                "http://127.0.0.1:3001/global/messages",
+                { query: `user_id=${user.id}` }
+            );
+            socket.on(`unseen-messages-${user.id}`, response => {
+                console.log(response);
+                $("#unred")[0].innerHTML = response.data.unseen;
+            });
+        });
+    </script>
+</html>

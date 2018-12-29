@@ -4,34 +4,32 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-        <title>Client</title>
+        <title>Client id 2 home</title>
     </head>
     <body>
-        <input type="text" id="text-field" /> <button id="send-button">send</button>
+        <a href=".\client_2_chat.html">chat</a>
+        <div>
+            <p>unred:</p>
+            <p id="unred"></p>
+        </div>
     </body>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
     <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
     <script>
         $(document).ready(function() {
             var user = {
-                id: 4,
-                email: "k_volodiev@abv.bg",
+                id: 2,
+                email: "k_volodiev2@abv.bg",
                 createdAt: "2018-12-24T10:40:06.000Z",
                 updatedAt: "2018-12-24T10:40:06.000Z"
             };
-            // var socket = io.connect("http://127.0.0.1:3001/chat");
-            // $("#send-button").click(function(event) {
-            //     event.preventDefault();
-            //     // socket.emit('new_message')
-            // });
-            // var stringg = 
-            console.log(JSON.stringify(user));
             var socket = io.connect(
                 "http://127.0.0.1:3001/global/messages",
-                { query: `user_id=${user.id}`}
+                { query: `user_id=${user.id}` }
             );
-            socket.on("unseen", response => {
+            socket.on(`unseen-messages-${user.id}`, response => {
                 console.log(response);
+                $("#unred")[0].innerHTML = response.data.unseen;
             });
         });
     </script>
