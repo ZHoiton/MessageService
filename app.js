@@ -56,6 +56,122 @@ app.get("/", (request, response) => {
 // }
 //! when using .emit use also binary to improve performance => socket.binary(false).emit();
 
+app.get("/help", (request, response) => {
+    response.status(200).send({
+        status: "ok",
+        code: 200,
+        messages: [],
+        data: {
+            endpoints: [
+                {
+                    link: `127.0.0.1:${port}/conversation`,
+                    type: "http/post",
+                    description: "creates a conversation with the given params",
+                    request: {
+                        type: "body",
+                        params: ["title", "participants", "image", "last_message", "last_message_timestamp"]
+                    }
+                },
+                {
+                    link: `127.0.0.1:${io_port}/global/messages`,
+                    type: "socket",
+                    description: "connection to for how many chats the user has unseen messages in.",
+                    events: [
+                        {
+                            name: "unseen-messages-${user_id}",
+                            type: "emitter",
+                            namespace: "/global/messages",
+                            description:
+                                "fired each time on a new message, sending an int with the number of chats in whihc the user has unseen messsages."
+                        },
+                        {
+                            name: "connection",
+                            type: "emitter",
+                            namespace: "/global/messages",
+                            description: "upon connectiong to the socket an unseen-messages-${user_id} event is fired"
+                        }
+                    ]
+                },
+                {
+                    link: `127.0.0.1:${io_port}/private/messages`,
+                    type: "socket",
+                    description: "connection to list all private chats for a user.",
+                    events: [
+                        {
+                            name: "message-list-${user_id}",
+                            type: "emitter",
+                            namespace: "/private/messages",
+                            description:
+                                "fired each time on a new message, and returns a list of chats( conversations) with DESC order by the last recived message."
+                        },
+                        {
+                            name: "connection",
+                            type: "emitter",
+                            namespace: "/private/messages",
+                            description: "upon connectiong to the socket an message-list-${user_id} event is fired"
+                        }
+                    ]
+                },
+                {
+                    link: `127.0.0.1:${io_port}/join/chat`,
+                    type: "socket",
+                    description: "connection to list all private messages for a user.",
+                    events: [
+                        {
+                            name: "load-conversation-${conversation_key}",
+                            type: "emitter",
+                            namespace: "/join/chat",
+                            description: "returns a list of messages with DESC order by the last recived message."
+                        },
+                        {
+                            name: "connection",
+                            type: "emitter",
+                            namespace: "/join/chat",
+                            description: "upon connectiong to the socket an load-conversation-${conversation_key} event is fired"
+                        },
+                        {
+                            name: "new-message",
+                            type: "emitter",
+                            namespace: "/join/chat",
+                            description: "fired to each connected user upon new message in the chat"
+                        },
+                        {
+                            name: "new-message-${conversation_key}",
+                            type: "listener",
+                            namespace: "/join/chat",
+                            description: "client event send upon new message"
+                        },
+                        {
+                            name: "seen-last-message-${conversation_key}",
+                            type: "listener",
+                            namespace: "/join/chat",
+                            description: "client event send upon seening the last message of a conversation (chat)"
+                        },
+                        {
+                            name: "message-list-${user_id}",
+                            type: "emitter",
+                            namespace: "/private/messages",
+                            description:
+                                "fired each time on a new message, to update the message list of everyone in the conversation."
+                        },
+                        {
+                            name: "unseen-messages-${user_id}",
+                            type: "emitter",
+                            namespace: "/global/messages",
+                            description:
+                                "fired each time on a new message, updating the value of the unseen chats"
+                        }
+                    ]
+                }
+            ]
+        },
+        error: {}
+    });
+});
+
+/**
+ *
+ */
 app.post("/conversation", (request, response) => {
     const conversation = {};
     conversation["title"] = request.body.title;
@@ -67,7 +183,7 @@ app.post("/conversation", (request, response) => {
 
     conversation["image"] = request.body.image;
     conversation["last_message"] = request.body.last_message;
-    conversation["last_message_timestamp"] = new Date();
+    conversation["last_message_timestamp"] = request.body.last_message_timestamp;
     conversation["key"] = timeUuid.now();
 
     const conversation_db = {};
@@ -126,10 +242,15 @@ app.post("/conversation", (request, response) => {
             console.log(error);
         });
 
-    response.sendStatus(200);
-});
+    response.status(200).send({
+        status: "ok",
+        code: 200,
+        messages: ["conversation added successfully"],
+        data: {},
+        error: {}
 
-app.post("/conversations/port", (request, response) => {});
+    });
+});
 
 io.of("/join/chat", socket => {
     const conversation_key = socket.handshake.query.conversation_key;

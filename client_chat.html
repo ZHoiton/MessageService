@@ -18,15 +18,15 @@
             var currently_selected_chat = null;
             var user = {
                 id: 1,
-                email: "k_volodiev2@abv.bg",
+                email: "2@abv.bg",
                 createdAt: "2018-12-24T10:40:06.000Z",
                 updatedAt: "2018-12-24T10:40:06.000Z"
             };
+            var conversations = null;
             var socket = io.connect(
                 "http://127.0.0.1:3001/private/messages",
                 { query: `user_id=${user.id}` }
             );
-
             socket.on(`message-list-${user.id}`, response => {
                 $("#conversations")[0].innerHTML = "";
                 console.log(response);
@@ -43,7 +43,7 @@
 
                                 // currently_selected_chat = this.id;
                                 var chat = io.connect(
-                                    "http://127.0.0.1:3001/private/chat",
+                                    "http://127.0.0.1:3001/join/chat",
                                     { query: `conversation_key=${current_conversation.conversation_key}&user_id=${user.id}` }
                                 );
 
