@@ -12,7 +12,7 @@ const client = new cassandra.Client({
     contactPoints: ["127.0.0.1:9042"],
     localDataCenter: "datacenter1",
     encoding: { useUndefinedAsUnset: true },
-    keyspace: "message_service_test"
+    keyspace: "message_service"
 });
 
 // for parsing application/x-www-form-urlencoded

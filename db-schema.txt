@@ -1,12 +1,19 @@
+CREATE KEYSPACE message_service
+  WITH REPLICATION = { 
+   'class' : 'SimpleStrategy', 
+   'replication_factor' : 2 
+  };
+
 drop table conversations;
 drop table user_conversations;
 drop table unseen_messages_counter;
 drop table user_last_seen_message;
 drop table messages;
 
+
 create table conversations (
     key timeuuid, 
-    participants_id map<int,timeuuid>, 
+    participants_id map<uuid,timeuuid>, 
     primary key(key)
 );
 
@@ -19,7 +26,7 @@ create table unseen_messages_counter (
 create table user_last_seen_message(
     user_conversation_key timeuuid,
     conversation_key timeuuid,
-    user_id int,
+    user_id uuid,
     last_seen_message_key timeuuid,
     primary key(user_conversation_key)
 );
@@ -28,7 +35,7 @@ create index user_unseen_message_user_id_index on user_last_seen_message (user_i
 
 create table user_conversations(
     key timeuuid,
-    user_id int,
+    user_id uuid,
     conversation_key timeuuid,
     last_message text, 
     last_message_timestamp timestamp, 
